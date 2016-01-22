@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/plugins/czml_generator" >
+        <file>icon.png</file>
+        <file>prism.png</file>
+    </qresource>
+</RCC>
