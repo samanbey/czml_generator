@@ -27,6 +27,7 @@ from qgis.core import *
 import resources
 
 from prism_map_dialog import PrismMapDialog
+from prism_map_time_dialog import PrismMapTimeDialog
 
 class CZMLGenerator:
     """CZML Generator QGIS plugin"""
@@ -50,6 +51,14 @@ class CZMLGenerator:
         a=QAction(QIcon(":/plugins/czml_generator/prism.png"), "Prism Map", self.iface.mainWindow())
         a.triggered.connect(self.runPrismMap)
         self.actions.append(a)
+        # Prism Map with time
+        a=QAction(QIcon(":/plugins/czml_generator/prism.png"), "Prism Map with time", self.iface.mainWindow())
+        a.triggered.connect(self.runPrismMapTime)
+        self.actions.append(a)
+        
+        # create dialogs
+        self.PMDlg=PrismMapDialog()
+        self.PMTDlg=PrismMapTimeDialog()
         
         for a in self.actions:
             # add menu item
@@ -63,5 +72,8 @@ class CZMLGenerator:
         
     def runPrismMap(self):
         """Creates and launches prism map dialog"""
-        dlg=PrismMapDialog()
-        dlg.runThis(self.iface)
+        self.PMDlg.runThis(self.iface)
+        
+    def runPrismMapTime(self):
+        """Creates and launches prism map with time dialog"""
+        self.PMTDlg.runThis(self.iface)
