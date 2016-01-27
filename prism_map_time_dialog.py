@@ -58,10 +58,13 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         """Loads the attribute names of the selected layer into attrList and strAttrList comboboxes"""
         # find layer by chosen name
         name=self.layerList.currentText()
+        alayer=None
         for layer in self.iface.legendInterface().layers():
             if (layer.name()==name):
                 alayer=layer
                 break
+        if alayer==None:
+            return
         # get attr list
         al=[]
         self.strAttrList.clear()
@@ -181,7 +184,6 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         self.pbCancel.clicked.connect(self.reject) # Cancel button
         self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
         self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
-        #self.attrList.currentIndexChanged.connect(self.showMinMax) # show min/max values when an attribute is selected
         self.pbAdd.clicked.connect(self.addAttr) # Add button
         self.pbRemove.clicked.connect(self.removeAttr) # Remove button
         self.twTimesAttrs.itemSelectionChanged.connect(self.enableDisableRemove) # Enable/disable remove button

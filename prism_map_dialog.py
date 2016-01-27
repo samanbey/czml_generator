@@ -58,10 +58,15 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         """Loads the attribute names of the selected layer into attrList and strAttrList comboboxes"""
         # find layer by chosen name
         name=self.layerList.currentText()
+        alayer=None
         for layer in self.iface.legendInterface().layers():
             if (layer.name()==name):
                 alayer=layer
                 break
+        if alayer==None:
+            return
+        # update min/max information
+        self.showMinMax()
         # get attr list
         al=[]
         self.strAttrList.clear()
