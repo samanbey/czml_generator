@@ -28,6 +28,7 @@ import resources
 
 from prism_map_dialog import PrismMapDialog
 from prism_map_time_dialog import PrismMapTimeDialog
+from range_legend_dialog import RangeLegendDialog
 
 class CZMLGenerator:
     """CZML Generator QGIS plugin"""
@@ -59,6 +60,9 @@ class CZMLGenerator:
         # create dialogs
         self.PMDlg=PrismMapDialog()
         self.PMTDlg=PrismMapTimeDialog()
+        self.RLDlg=RangeLegendDialog()
+        self.PMDlg.RLDlg=self.RLDlg
+        self.PMTDlg.RLDlg=self.RLDlg
         
         for a in self.actions:
             # add menu item

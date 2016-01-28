@@ -316,7 +316,7 @@
   <widget class="QPushButton" name="pbOK">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>280</x>
      <y>340</y>
      <width>75</width>
      <height>23</height>
@@ -335,7 +335,7 @@
   <widget class="QPushButton" name="pbCancel">
    <property name="geometry">
     <rect>
-     <x>280</x>
+     <x>370</x>
      <y>340</y>
      <width>75</width>
      <height>23</height>
@@ -425,6 +425,19 @@
      <width>113</width>
      <height>20</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pbLegendSettings">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>340</y>
+     <width>101</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Legend settings...</string>
    </property>
   </widget>
  </widget>

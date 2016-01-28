@@ -41,6 +41,18 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         super(PrismMapDialog, self).__init__(parent)
         self.setupUi(self)
         
+        # event handlers
+        self.pbOK.clicked.connect(self.confirmOK) # OK Button
+        self.pbCancel.clicked.connect(self.reject) # Cancel button
+        self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
+        self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
+        self.attrList.currentIndexChanged.connect(self.showMinMax) # show min/max values when an attribute is selected
+        self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
+        
+        
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
         fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
@@ -138,17 +150,6 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         """
         # store iface
         self.iface=iface
-        
-        # event handlers
-        self.pbOK.clicked.connect(self.confirmOK) # OK Button
-        self.pbCancel.clicked.connect(self.reject) # Cancel button
-        self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
-        self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
-        self.attrList.currentIndexChanged.connect(self.showMinMax) # show min/max values when an attribute is selected
-        self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
         
         # collect currently loaded polygon layers to "layerList" comboBox
         layers=iface.legendInterface().layers()

@@ -40,7 +40,20 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         """Constructor."""
         super(PrismMapTimeDialog, self).__init__(parent)
         self.setupUi(self)       
-        
+        # event handlers
+        self.pbOK.clicked.connect(self.confirmOK) # OK Button
+        self.pbCancel.clicked.connect(self.reject) # Cancel button
+        self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
+        self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
+        self.pbAdd.clicked.connect(self.addAttr) # Add button
+        self.pbRemove.clicked.connect(self.removeAttr) # Remove button
+        self.twTimesAttrs.itemSelectionChanged.connect(self.enableDisableRemove) # Enable/disable remove button
+        self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
+        self.pbLegendSettings.clicked.connect(self.legendSettings) # Legend settings button
+                
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
         fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
@@ -167,7 +180,22 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         self.pbRemove.setEnabled(False)
         # update min/max information
         self.showMinMax()
-        
+    
+    def legendSettings(self):
+        """Opens legend settings dialog"""
+        # check if we can already create legend
+        if self.twTimesAttrs.rowCount()==0:
+            QMessageBox.warning(self,"Warning","You have to add attributes to display first.")
+            return
+        # dictionary with settings
+        ls={}
+        ls['minV']=self.minV
+        ls['maxV']=self.maxV
+        ls['minColor']=self.cb1.color()
+        ls['maxColor']=self.cb2.color()
+        ls['attrName']=self.leLegendAttrName.text()
+        self.RLDlg.runThis(ls)
+    
     def runThis(self,iface):
         """This is called when user clicks on "CZML Prism Map"
 
@@ -178,19 +206,6 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         """
         # store iface
         self.iface=iface
-        
-        # event handlers
-        self.pbOK.clicked.connect(self.confirmOK) # OK Button
-        self.pbCancel.clicked.connect(self.reject) # Cancel button
-        self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
-        self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
-        self.pbAdd.clicked.connect(self.addAttr) # Add button
-        self.pbRemove.clicked.connect(self.removeAttr) # Remove button
-        self.twTimesAttrs.itemSelectionChanged.connect(self.enableDisableRemove) # Enable/disable remove button
-        self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
         
         # clear lists
         self.layerList.clear()
