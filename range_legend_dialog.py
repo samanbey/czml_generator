@@ -43,8 +43,7 @@ class RangeLegendDialog(QtGui.QDialog, FORM_CLASS):
         self.leNumberOfSamples.textEdited.connect(self.updateList) # number of samples changed
         self.pbUpdatePreview.clicked.connect(self.updatePreview) # update preview
         self.lwSampleValues.itemChanged.connect(self.checkValues) # check list values
-        
-        
+               
     def checkValues(self):
         """Checks list values whether they are numbers or not"""
         for i in range(self.lwSampleValues.count()):
@@ -74,8 +73,8 @@ class RangeLegendDialog(QtGui.QDialog, FORM_CLASS):
         # update preview
         self.updatePreview()
     
-    def updatePreview(self):
-        """Update legend preview"""
+    def legendHtml(self):
+        """Generates HTML markup for legend with the current settings"""
         # get color components from settings
         R1=self.settings['minColor'].red()
         G1=self.settings['minColor'].green()
@@ -110,23 +109,40 @@ class RangeLegendDialog(QtGui.QDialog, FORM_CLASS):
         # create color samples
         for i in range(self.N):
             html+='<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+self.lwSampleValues.item(i).text()+'<br/>'
+        return html
+    
+    def updatePreview(self):
+        """Update legend preview"""
         # view legend
-        self.wvPreview.setHtml(html)
+        self.wvPreview.setHtml(self.legendHtml())
     
     def runThis(self,settings):
         """This is called when user clicks on "Legend settings"
 
         :param settings: A dictionary with settings
-        :type iface: dictionary
+        :type settings: dictionary
         """
         self.settings=settings
         
-        # set initial samples if the list is still empty
-        if self.lwSampleValues.count()==0:
+        if self.settings['samples']==None:
+            # set initial samples if no sample list provided
             self.updateList()
+        else:
+            # otherwise fill list with provided samples
+            self.leNumberOfSamples.setText(str(len(self.settings['samples'])))
+            self.lwSampleValues.clear()
+            for s in self.settings['samples']:
+                self.lwSampleValues.addItem(str(s))
+            self.updatePreview()
+            
         # show dialog
         self.show()
         if self.exec_():
-            # OK clicked
-            pass
-            
+            # OK clicked - return legend sample list
+            l=[]
+            for i in range(self.lwSampleValues.count()):
+                l.append(float(self.lwSampleValues.item(i).text()))
+            return l
+        else:
+            # Cancel clicked - return nothing
+            return None

@@ -46,13 +46,36 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         self.pbCancel.clicked.connect(self.reject) # Cancel button
         self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
         self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
-        self.attrList.currentIndexChanged.connect(self.showMinMax) # show min/max values when an attribute is selected
+        self.attrList.currentIndexChanged.connect(self.attrChanged) # set legend attribute name when another attribute is selected and call showMinMax
         self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
         self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
         self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
         self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
+        self.pbLegendSettings.clicked.connect(self.legendSettings) # Legend settings button
         
-        
+    def legendSettings(self):
+        """Opens legend settings dialog"""
+        # TODO: checking is there is a numeric attribute selected
+
+        # current attr name
+        aname=self.attrList.currentText()
+        # dictionary with settings
+        ls={}
+        ls['minV']=self.amin[aname]
+        ls['maxV']=self.amax[aname]
+        ls['minColor']=self.cb1.color()
+        ls['maxColor']=self.cb2.color()
+        ls['attrName']=self.leLegendAttrName.text()
+        ls['samples']=self.legendSamples
+        l=self.RLDlg.runThis(ls)
+        if l!=None:
+            self.legendSamples=l
+    
+    def attrChanged(self):
+        """Sets legend attribute name when another attribute is selected and calls showMinMax"""
+        self.leLegendAttrName.setText(self.attrList.currentText())
+        self.showMinMax()
+    
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
         fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
@@ -151,6 +174,9 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         # store iface
         self.iface=iface
         
+        # place to store legend settings
+        self.legendSamples=None
+        
         # collect currently loaded polygon layers to "layerList" comboBox
         layers=iface.legendInterface().layers()
         ll=[] 
@@ -238,16 +264,31 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
                 hfile=codecs.open(htmlFn,'w','utf-8')
                 hfile.write('<style>\n.czmlLegendSample { width: 40px; height: 20px; border-radius:3px; border: solid thin black; display: inline-block; }\n')
                 hfile.write('h3.czmlLegend { margin:0; padding-bottom:10px; }\n')
-                for i in range(4):
-                    R=int(R1+dR*i/3.0)
-                    G=int(G1+dG*i/3.0)
-                    B=int(B1+dB*i/3.0)
-                    hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
-                hfile.write('</style>\n<h3 class="czmlLegend">'+aName+'</h3>')
-                for i in range(4):
-                    value=int(self.amin[aName]+(self.amax[aName]-self.amin[aName])*i/3.0)
-                    hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
-                hfile.close()
+                if self.legendSamples!=None:
+                    # we have custom settings for legend
+                    for i in range(len(self.legendSamples)):
+                        rv=(self.legendSamples[i]-self.amin[aName])/(self.amax[aName]-self.amin[aName])
+                        R=int(R1+dR*rv)
+                        G=int(G1+dG*rv)
+                        B=int(B1+dB*rv)
+                        hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
+                else:
+                    for i in range(4):
+                        R=int(R1+dR*i/3.0)
+                        G=int(G1+dG*i/3.0)
+                        B=int(B1+dB*i/3.0)
+                        hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
+                hfile.write('</style>\n<h3 class="czmlLegend">'+self.leLegendAttrName.text()+'</h3>')
+                if self.legendSamples!=None:
+                    # we have custom settings for legend
+                    for i in range(len(self.legendSamples)):
+                        value=self.legendSamples[i]
+                        hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
+                else:
+                    for i in range(4):
+                        value=int(self.amin[aName]+(self.amax[aName]-self.amin[aName])*i/3.0)
+                        hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
+                    hfile.close()
             # farewell message
             msg="CZML file ("+filename+")"
             if (self.cbCreateLegend.isChecked()):

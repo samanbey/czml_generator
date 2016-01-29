@@ -194,7 +194,10 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         ls['minColor']=self.cb1.color()
         ls['maxColor']=self.cb2.color()
         ls['attrName']=self.leLegendAttrName.text()
-        self.RLDlg.runThis(ls)
+        ls['samples']=self.legendSamples
+        l=self.RLDlg.runThis(ls)
+        if l!=None:
+            self.legendSamples=l
     
     def runThis(self,iface):
         """This is called when user clicks on "CZML Prism Map"
@@ -210,6 +213,11 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         # clear lists
         self.layerList.clear()
         self.twTimesAttrs.clear()
+        self.twTimesAttrs.setRowCount(0)
+        
+        # place to store legend settings
+        self.legendSamples=None
+        
         # collect currently loaded polygon layers to "layerList" comboBox
         layers=iface.legendInterface().layers()
         ll=[] 
@@ -323,15 +331,30 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
                 hfile=codecs.open(htmlFn,'w','utf-8')
                 hfile.write('<style>\n.czmlLegendSample { width: 40px; height: 20px; border-radius:3px; border: solid thin black; display: inline-block; }\n')
                 hfile.write('h3.czmlLegend { margin:0; padding-bottom:10px; }\n')
-                for i in range(4):
-                    R=int(R1+dR*i/3.0)
-                    G=int(G1+dG*i/3.0)
-                    B=int(B1+dB*i/3.0)
-                    hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
+                if self.legendSamples!=None:
+                    # we have custom settings for legend
+                    for i in range(len(self.legendSamples)):
+                        rv=(self.legendSamples[i]-self.minV)/(self.maxV-self.minV)
+                        R=int(R1+dR*rv)
+                        G=int(G1+dG*rv)
+                        B=int(B1+dB*rv)
+                        hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
+                else:
+                    for i in range(4):
+                        R=int(R1+dR*i/3.0)
+                        G=int(G1+dG*i/3.0)
+                        B=int(B1+dB*i/3.0)
+                        hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
                 hfile.write('</style>\n<h3 class="czmlLegend">'+self.leLegendAttrName.text()+'</h3>')
-                for i in range(4):
-                    value=int(self.amin[aName]+(self.amax[aName]-self.amin[aName])*i/3.0)
-                    hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
+                if self.legendSamples!=None:
+                    # we have custom settings for legend
+                    for i in range(len(self.legendSamples)):
+                        value=self.legendSamples[i]
+                        hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
+                else:
+                    for i in range(4):
+                        value=int(self.amin[aName]+(self.amax[aName]-self.amin[aName])*i/3.0)
+                        hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
                 hfile.close()
             # farewell message
             msg="CZML file ("+filename+")"
