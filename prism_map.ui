@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>CZMLPrismMapDialogBase</class>
  <widget class="QDialog" name="CZMLPrismMapDialogBase">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -34,6 +37,9 @@
   <property name="windowIcon">
    <iconset>
     <normaloff>prism.png</normaloff>prism.png</iconset>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <widget class="QComboBox" name="layerList">
    <property name="geometry">
