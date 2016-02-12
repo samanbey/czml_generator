@@ -44,42 +44,40 @@
             var cv = new Cesium.Viewer('globe',
             {
                 baseLayerPicker:false,
-                //animation: false,
+                homeButton: false,
                 navigationInstructionsInitiallyVisible: false,
                 navigationHelpButton: false,
                 sceneModePicker: false,
                 selectionIndicator: false,
                 geocoder: false,
-                //timeline:false,
+                //animation: false, // you can disable animation and timeline if your data is time-independent
+                //timeline: false,
                 terrainProvider: terrain,
             });
             
+            // loading CZML file
+            czmlUrl='chart1.czml'; // set the CZML file name here
             var c=new Cesium.CzmlDataSource();
             cv.dataSources.add(c);
-            // set the CZML flie name here
-            c.load('chart1.czml'); 
+            c.load(czmlUrl).then(function() {
+                cv.zoomTo(c);
+            }); 
             
             // the following section is only needed if you have a legend
             // screen overlay legend
-            var lDiv=document.createElement('div');
-            lDiv.className="legendDiv";
             var x=new XMLHttpRequest();
-            // set legend name here
-            x.open('get','chart1.czml.legend.html',false);
+            legendUrl='chart1.czml.legend.html'; // set legend name here
+            x.open('get',legendUrl,true);
+            x.onreadystatechange=function() {
+                if (x.readyState==4)
+                    if (x.status==200) {
+                        var lDiv=document.createElement('div');
+                        lDiv.className="legendDiv";
+                        lDiv.innerHTML=x.responseText;
+                        cv.container.appendChild(lDiv);
+                    }
+            }
             x.send();
-            lDiv.innerHTML=x.responseText;
-            cv.container.appendChild(lDiv);
-
-            // the viewpoint is set for the current sample dataset (Hungary) - change it for yours
-            // set viewpoint
-            cv.camera.setView({
-                destination: Cesium.Cartesian3.fromDegrees(19.5, 42, 500000), // longitude (degrees), latitude (degrees), altitude (meters)
-                orientation: { // angles in radians
-                    heading: 0,
-                    pitch: -.6,
-                    roll: 0
-                }
-            });            
         </script>
     </body>
 </html>
