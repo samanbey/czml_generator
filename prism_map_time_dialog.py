@@ -92,14 +92,15 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         # get and min/max attribute values
         for i,f in enumerate(alayer.getFeatures()):
             for a in al:
-                if (i==0): # when it is the first feature, simply set the min/max valuse for the attrs
-                    self.amin[a]=f[a]
-                    self.amax[a]=f[a]
-                else: # otherwise change min/max if neccessary
-                    if (f[a]<self.amin[a]):
+                if (f[a]):
+                    if (not a in self.amin): # when it is the first feature, simply set the min/max valuse for the attrs
                         self.amin[a]=f[a]
-                    if (f[a]>self.amax[a]):
                         self.amax[a]=f[a]
+                    else: # otherwise change min/max if neccessary
+                        if (f[a]<self.amin[a]):
+                            self.amin[a]=f[a]
+                        if (f[a]>self.amax[a]):
+                            self.amax[a]=f[a]
         # set attr list
         self.attrList.clear()
         self.attrList.addItems(al)
@@ -145,6 +146,8 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
         except ValueError:
             sf=0
         # modify min/max by scale
+        #print self.minV
+        #print self.maxV==None
         mn=mn*sf
         mx=mx*sf
         self.sf=sf
@@ -290,16 +293,19 @@ class PrismMapTimeDialog(QtGui.QDialog, FORM_CLASS):
                     aTime=self.twTimesAttrs.item(row,0).text()
                     aName=self.twTimesAttrs.item(row,1).text()
                     # calculate height
+                    value=f[aName]
+                    if (not value):
+                        value=0
                     if (self.rbLin.isChecked()):
-                        h=f[aName]
+                        h=value
                     elif (self.rbSqrt.isChecked()):
-                        h=math.sqrt(f[aName])
+                        h=math.sqrt(value)
                     else:
-                        h=math.log(f[aName])
+                        h=math.log(value)
                     h=h*self.sf
                     heights.append('"'+aTime+'",'+str(h))
                     # calculate color
-                    rh=1.0*(f[aName]-self.minV)/(self.maxV-self.minV)
+                    rh=1.0*(value-self.minV)/(self.maxV-self.minV)
                     R=R1+dR*rh
                     G=G1+dG*rh
                     B=B1+dB*rh
