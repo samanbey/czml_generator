@@ -6,7 +6,7 @@ qgisMinimumVersion=2.0
 description=Creates CZML files for Cesium.js
 about=Creates CZML files for Cesium.js
     for thematic visualizations
-version=version 0.4
+version=version 0.5
 repository=https://github.com/samanbey/czml_generator
 
 experimental=True
