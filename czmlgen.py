@@ -30,6 +30,7 @@ from prism_map_dialog import PrismMapDialog
 from prism_map_time_dialog import PrismMapTimeDialog
 from range_legend_dialog import RangeLegendDialog
 from scaled_models_dialog import ScaledModelsDialog
+from connector_lines_dialog import ConnectorLinesDialog
 
 class CZMLGenerator:
     """CZML Generator QGIS plugin"""
@@ -61,6 +62,10 @@ class CZMLGenerator:
         a=QAction(QIcon(":/plugins/czml_generator/prism.png"), "Scaled models with time", self.iface.mainWindow())
         a.triggered.connect(self.runScaledModels)
         self.actions.append(a)
+        # Raised connector lines
+        a=QAction(QIcon(":/plugins/czml_generator/prism.png"), "Raised connector lines", self.iface.mainWindow())
+        a.triggered.connect(self.runConnectorLines)
+        self.actions.append(a)
         
         # create dialogs
         self.PMDlg=PrismMapDialog()
@@ -69,6 +74,7 @@ class CZMLGenerator:
         self.PMDlg.RLDlg=self.RLDlg
         self.PMTDlg.RLDlg=self.RLDlg
         self.SMDlg=ScaledModelsDialog()
+        self.CLDlg=ConnectorLinesDialog()
         
         for a in self.actions:
             # add menu item
@@ -91,3 +97,8 @@ class CZMLGenerator:
     def runScaledModels(self):
         """Creates and launches prism map with time dialog"""
         self.SMDlg.runThis(self.iface)
+
+    def runConnectorLines(self):
+        """Creates and launches raised connector lines dialog"""
+        self.CLDlg.runThis(self.iface)
+        
