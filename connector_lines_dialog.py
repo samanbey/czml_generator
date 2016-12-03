@@ -175,21 +175,20 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
             ofile=codecs.open(filename,'w','utf-8')
             # leading [ and document packet
             ofile.write('[\n{"id":"document","version":"1.0"}')
-            # get renderer
-            rend=alayer.rendererV2()
+            # get renderer (todo: get line color from renderer)
+            # rend=alayer.rendererV2()
+            # get symbol color for current polyline
+            symColor=self.cb.color()
+            symR=symColor.red()
+            symG=symColor.green()
+            symB=symColor.blue()
+            symA=symColor.alpha()
+            rgba=str(symR)+','+str(symG)+','+str(symB)+','+str(symA)
             # iterate over feaures
             lineN=0
             for f in alayer.getFeatures():
                 px=-1000
                 py=-1000
-                # get symbol color for current polyline
-                # !!!NOTWORKING!!!
-                symColor=rend.originalSymbolForFeature(f).color()
-                symR=symColor.red()
-                symG=symColor.green()
-                symB=symColor.blue()
-                symA=symColor.alpha()
-                rgba=str(symR)+','+str(symG)+','+str(symB)+','+str(symA)
                 availString="" # TODO: later add availability...
                 if (self.cbAddName.isChecked()):
                     nameString=',\n\t"name":"'+f[self.strAttrList.currentText()]+'"'
@@ -203,7 +202,12 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
                         # create line segment
                         # calculate distance and azimuth
                         d=acos(sin(py*RAD)*sin(y*RAD)+cos(py*RAD)*cos(y*RAD)*cos((x-px)*RAD))/RAD
-                        az=acos((sin(y*RAD)-sin(py*RAD)*cos(d*RAD))/cos(py*RAD)/sin(d*RAD))/RAD
+                        cosaz=(sin(y*RAD)-sin(py*RAD)*cos(d*RAD))/cos(py*RAD)/sin(d*RAD)
+                        if (cosaz>1):
+                            cosaz=1
+                        if (cosaz<-1):
+                            cosaz=1
+                        az=acos(cosaz)/RAD
                         if (sin((x-px)*RAD)<0):
                             az=-az
                         maxh=d*40000
@@ -214,7 +218,12 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
                             dd=d*(.5-.5*cos(gamma))
                             h=sin(gamma)*maxh
                             lat2=asin(sin(py*RAD)*cos(dd*RAD)+cos(py*RAD)*sin(dd*RAD)*cos((az)*RAD))/RAD
-                            lon2=acos((cos(dd*RAD)-sin(py*RAD)*sin(lat2*RAD))/cos(py*RAD)/cos(lat2*RAD))/RAD
+                            cosl2=(cos(dd*RAD)-sin(py*RAD)*sin(lat2*RAD))/cos(py*RAD)/cos(lat2*RAD)
+                            if (cosl2>1):
+                                cosl2=1
+                            if (cosl2<-1):
+                                cosl2=-1
+                            lon2=acos(cosl2)/RAD
                             if (sin(az*RAD)<0):
                                 lon2=-lon2
                             lon2=lon2+px
