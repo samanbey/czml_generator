@@ -80,10 +80,12 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
             return
         # get attr list
         self.strAttrList.clear()
+        self.numAttrList.clear()
         for fld in alayer.pendingFields():
             if (fld.typeName()=='String'):
                 self.strAttrList.addItem(fld.name()) # an attribute can be used as name if it is a string
-
+            elif (fld.typeName() in ['Integer','Real']):
+                self.numAttrList.addItem(fld.name()) # an attribute can be used as name if it is a string
     
     def addAttr(self):
         """Add selected attribute and time to time/attribute list"""
@@ -167,6 +169,7 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
             # TODO: get these values from dialog
             segments=20;
             RAD=pi/180;
+            lw=self.leLineWidth.text()
             # create projection transformer object
             crsDest = QgsCoordinateReferenceSystem(4326) # WGS 84
             crsSrc = alayer.crs()
@@ -230,7 +233,7 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
                             if (coords!=""):
                                 coords=coords+","
                             coords=coords+'\n\t\t\t\t'+str(lon2)+","+str(lat2)+","+str(h)
-                        packetString='{\n\t"id":"line'+str(lineN)+'"'+nameString+availString+',\n\t"polyline":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"width":5}}'
+                        packetString='{\n\t"id":"line'+str(lineN)+'"'+nameString+availString+',\n\t"polyline":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"width":'+lw+'}}'
                         ofile.write(",\n"+packetString);
                         lineN=lineN+1
                     else:
