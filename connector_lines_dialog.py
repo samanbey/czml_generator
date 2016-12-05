@@ -46,13 +46,12 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
         self.pbCancel.clicked.connect(self.reject) # Cancel button
         self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
         self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
-        #self.pbAdd.clicked.connect(self.addAttr) # Add button
-        #self.pbRemove.clicked.connect(self.removeAttr) # Remove button
-        #self.twTimesAttrs.itemSelectionChanged.connect(self.enableDisableRemove) # Enable/disable remove button
-        #self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        #self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        #self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
-        #self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
+        self.numAttrList.currentIndexChanged.connect(self.numAttrChanged) # set width attribute when a numeric attribute is selected
+        self.rbWidthAttr.toggled.connect(self.showMinMax) # update min/max when "depends on attribute" is checked
+        self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
+        self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
                 
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
@@ -67,6 +66,50 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
         else:
             self.accept()
 
+    def numAttrChanged(self):
+        """Set width attribute"""
+        self.showMinMax();
+
+    def showMinMax(self):
+        """Displays the min/max values for the chosen attribute"""
+        # show fixed width if checked
+        if (self.rbFixWidth.isChecked()):
+            self.lblRange.setText(self.leLineWidth.text())
+            return
+        # current attr name
+        aname=self.numAttrList.currentText()
+        if (aname==""):
+            return
+        # min/max values using currently selected scale function and factor
+        if (self.rbLin.isChecked()):
+            mn=self.amin[aname]
+            mx=self.amax[aname]
+        elif (self.rbSqrt.isChecked()):
+            if (self.amin[aname]<0 or self.amax[aname]<0):
+                # use sqrt only for non-negative values
+                QMessageBox.warning(self,"Warning","Square root is not applicable for negative values!")
+                self.rbLin.toggle()
+                return
+            mn=math.sqrt(self.amin[aname])
+            mx=math.sqrt(self.amax[aname])
+        else:
+            if (self.amin[aname]<=0 or self.amax[aname]<=0):
+                # use log only for positive values
+                QMessageBox.warning(self,"Warning","Logarithm is not applicable for non-positive values!")
+                self.rbLin.toggle()
+                return
+            mn=math.log(self.amin[aname])
+            mx=math.log(self.amax[aname])
+        try:
+            sf=float(self.scaleFactor.text())
+        except ValueError:
+            sf=0
+        mn=round(mn*sf,1)
+        mx=round(mx*sf,1)
+        self.sf=sf
+        self.lblRange.setText(str(mn)+" - "+str(mx))
+                
+        
     def getAttrList(self):
         """Loads the attribute names of the selected layer into attrList and strAttrList comboboxes"""
         # find layer by chosen name
@@ -81,11 +124,29 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
         # get attr list
         self.strAttrList.clear()
         self.numAttrList.clear()
+        al=[]
         for fld in alayer.pendingFields():
             if (fld.typeName()=='String'):
-                self.strAttrList.addItem(fld.name()) # an attribute can be used as name if it is a string
+                self.strAttrList.addItem(fld.name()) # an attribute can be used as width if it is numeric
             elif (fld.typeName() in ['Integer','Real']):
                 self.numAttrList.addItem(fld.name()) # an attribute can be used as name if it is a string
+                al.append(fld.name())
+        # dictionaries for min/max attribute values
+        self.amin={}
+        self.amax={}
+        # get and min/max attribute values
+        for i,f in enumerate(alayer.getFeatures()):
+            for a in al:
+                if (i==0): # when it is the first feature, simply set the min/max valuse for the attrs
+                    self.amin[a]=f[a]
+                    self.amax[a]=f[a]
+                else: # otherwise change min/max if neccessary
+                    if (f[a]<self.amin[a]):
+                        self.amin[a]=f[a]
+                    if (f[a]>self.amax[a]):
+                        self.amax[a]=f[a]
+        print(self.amin)
+        self.showMinMax()
     
     def addAttr(self):
         """Add selected attribute and time to time/attribute list"""
@@ -128,6 +189,8 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
         """
         # store iface
         self.iface=iface
+        
+        print("start")
         
         # clear lists
         self.layerList.clear()
@@ -197,6 +260,20 @@ class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
                     nameString=',\n\t"name":"'+f[self.strAttrList.currentText()]+'"'
                 else:
                     nameString=''
+                # if width depens on attribute, get current value
+                if (self.rbWidthAttr.isChecked()):
+                    w=float(f[self.numAttrList.currentText()])
+                    if (self.rbSqrt.isChecked()):
+                        w=sqrt(w)
+                    elif (self.rbLog.isChecked()):
+                        w=log(w)
+                    try:
+                        sf=float(self.scaleFactor.text())
+                    except ValueError:
+                        sf=0
+                    lw=str(round(w*sf,1))
+                    # add attribute value to description
+                    nameString=nameString+',\n\t"description":"'+self.numAttrList.currentText()+': '+str(f[self.numAttrList.currentText()])+'"'
                 for p in f.geometry().asPolyline():
                     p1=xform.transform(p)
                     x=p1.x()

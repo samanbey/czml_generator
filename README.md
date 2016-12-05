@@ -17,3 +17,14 @@ There is a sample Cesium viewer in `sampleViewer` folder.
 - If you have a Bing key, insert it at the appropriate place
 - Change the CZML data file name and the legend file name where indicated in the code
 - Load the document in a browser
+
+## Functions
+
+### Prism Map and Prism Map with time
+Use this function to create prism maps with or without temporal animation based on any polygon layers currently opened in QGIS
+
+### Scaled models with time
+Animated visualization of attribute change in time by placing 3D models whose sizes change with the corresponding attribute value.
+
+### Raised connector lines
+Creates raised connector arcs from a line layer. Useful for visualizing connections between a set of points
