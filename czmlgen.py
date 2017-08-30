@@ -78,13 +78,13 @@ class CZMLGenerator:
         
         for a in self.actions:
             # add menu item
-            self.iface.addPluginToMenu("&CZML Generator", a)
+            self.iface.addPluginToWebMenu("&CZML Generator", a)
         
     def unload(self):
         """Removes the plugin menu item from QGIS GUI."""
         for a in self.actions:
             # remove the plugin menu item and icon
-            self.iface.removePluginMenu("&CZML Generator", a)
+            self.iface.removePluginWebMenu("&CZML Generator", a)
         
     def runPrismMap(self):
         """Creates and launches prism map dialog"""

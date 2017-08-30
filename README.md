@@ -5,7 +5,7 @@ A QGIS plugin for creating CZML files
 - Copy the folder to your QGIS Python plugin folder (typically {your user folder}/.qgis2/python/plugins). `sampleData` and `sampleViewer` folders are not needed there.
 - (Re-)start QGIS
 - In QGIS, go to Plugin Manager, find CZML Generator and enable it.
-- The `CZML Generator` menu appears in the Plugins menu
+- The `CZML Generator` menu appears in the Web menu
 
 ## Sample data
 You can find some sample data to start with in the folder `sampleData`
