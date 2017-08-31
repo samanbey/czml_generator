@@ -8,5 +8,5 @@ about=Creates CZML files for Cesium.js
     for thematic visualizations
 version=version 0.5
 repository=https://github.com/samanbey/czml_generator
-
+tracker=https://github.com/samanbey/czml_generator/issues
 experimental=True
