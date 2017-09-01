@@ -2,9 +2,12 @@
 A QGIS plugin for creating CZML files
 
 ## Setup
-- Copy the folder to your QGIS Python plugin folder (typically {your user folder}/.qgis2/python/plugins). `sampleData` and `sampleViewer` folders are not needed there.
+
+(If downloaded the latest version from GitHub:)
+- Copy the downloaded folder to your QGIS Python plugin folder (typically {your user folder}/.qgis2/python/plugins). `sampleData` and `sampleViewer` folders are not needed there.
+
 - (Re-)start QGIS
-- In QGIS, go to Plugin Manager, find CZML Generator and enable it.
+- In QGIS, go to Plugin Manager (remember to check "Show also experimental plugins"), find CZML Generator and enable it.
 - The `CZML Generator` menu appears in the Web menu
 
 ## Sample data
@@ -28,3 +31,6 @@ Animated visualization of attribute change in time by placing 3D models whose si
 
 ### Raised connector lines
 Creates raised connector arcs from a line layer. Useful for visualizing connections between a set of points
+
+### 3D Pie chart
+Creates 3D Pie charts at feature centroids

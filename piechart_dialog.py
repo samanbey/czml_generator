@@ -47,48 +47,28 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
         self.pbBrowse.clicked.connect(self.browseFile) # open file dialog on clicking the browse button
         self.layerList.currentIndexChanged.connect(self.getAttrList) # get attribute list when a layer is selected
         self.attrList.itemChanged.connect(self.attrSelChanged) # attribute selection changed...
-        #self.attrList.currentIndexChanged.connect(self.attrChanged) # set legend attribute name when another attribute is selected and call showMinMax
         self.rbLin.toggled.connect(self.showMinMax) # update min/max when scale type is changed
         self.rbSqrt.toggled.connect(self.showMinMax) # update min/max when scale type is changed
         self.rbLog.toggled.connect(self.showMinMax) # update min/max when scale type is changed
         self.scaleFactor.textEdited.connect(self.showMinMax) # update min/max when scale factor is changed
-        self.pbLegendSettings.clicked.connect(self.legendSettings) # Legend settings button
-        
-    def legendSettings(self):
-        """Opens legend settings dialog"""
-        # TODO: checking is there is a numeric attribute selected
-
-        # current attr name
-        aname=self.attrList.currentText()
-        # dictionary with settings
-        ls={}
-        ls['minV']=self.amin[aname]
-        ls['maxV']=self.amax[aname]
-        ls['minColor']=self.cb1.color()
-        ls['maxColor']=self.cb2.color()
-        ls['attrName']=self.leLegendAttrName.text()
-        ls['samples']=self.legendSamples
-        l=self.RLDlg.runThis(ls)
-        if l!=None:
-            self.legendSamples=l
-    
+   
     def attrSelChanged(self):
         """something happened in the attribute list box"""
-        colors=[QColor(255,0,0),QColor(0,255,0),QColor(0,0,255),QColor(255,255,0)]
+        colors=[QColor(255,0,0),QColor(0,255,0),QColor(0,0,255),QColor(255,255,0),QColor(255,0,255),QColor(0,255,255)]
         ci=0
         # iterate over list items and find checked ones
+        # also calculates max range
+        maxTotal=0
         for i in range(self.attrList.count()):
             if self.attrList.item(i).checkState()>0:
                 self.attrList.item(i).setBackgroundColor(colors[ci%len(colors)])
+                maxTotal=maxTotal+self.amax[self.attrList.item(i).text()];
                 ci=ci+1
             else:
                 self.attrList.item(i).setBackgroundColor(QColor(255,255,255))
-
-    def attrChanged(self):
-        """Sets legend attribute name when another attribute is selected and calls showMinMax"""
-        self.leLegendAttrName.setText(self.attrList.currentText())
+        self.maxTotal=maxTotal
         self.showMinMax()
-    
+        
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
         fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
@@ -113,8 +93,6 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
                 break
         if alayer==None:
             return
-        # update min/max information
-        #self.showMinMax()
         # get attr list
         al=[]
         self.strAttrList.clear()
@@ -123,21 +101,18 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
                 al.append(fld.name()) # a mappable attribute if numeric
             elif (fld.typeName()=='String'):
                 self.strAttrList.addItem(fld.name()) # an attribute can be used as name if it is a string
-        # dictionaries for min/max attribute values
-        self.amin={}
+        # dictionary for max attribute values
         self.amax={}
-        # get and min/max attribute values
-        """for i,f in enumerate(alayer.getFeatures()):
+        # get max attribute values
+        for i,f in enumerate(alayer.getFeatures()):
             for a in al:
-                if (i==0): # when it is the first feature, simply set the min/max valuse for the attrs
-                    self.amin[a]=f[a]
+                if (i==0): # when it is the first feature, simply set the max valuse for the attrs
                     self.amax[a]=f[a]
-                else: # otherwise change min/max if neccessary
-                    if (f[a]<self.amin[a]):
-                        self.amin[a]=f[a]
+                else: # otherwise change max if neccessary
                     if (f[a]>self.amax[a]):
                         self.amax[a]=f[a]
-                        """
+        # DEBUG:
+        print self.amax
         # set attr list
         self.attrList.clear()
         self.attrList.addItems(al)
@@ -146,38 +121,31 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
 
     def showMinMax(self):
         """Displays the min/max values for the chosen attribute"""
-        # current attr name
-        aname=self.attrList.currentItem().text()
-        if (aname==""):
-            return
         # min/max values using currently selected scale function and factor
         if (self.rbLin.isChecked()):
-            mn=self.amin[aname]
-            mx=self.amax[aname]
+            mx=self.maxTotal
         elif (self.rbSqrt.isChecked()):
-            if (self.amin[aname]<0 or self.amax[aname]<0):
+            if (self.maxTotal<0):
                 # use sqrt only for non-negative values
                 QMessageBox.warning(self,"Warning","Square root is not applicable for negative values!")
                 self.rbLin.toggle()
                 return
-            mn=math.sqrt(self.amin[aname])
-            mx=math.sqrt(self.amax[aname])
+            mx=math.sqrt(self.maxTotal)
         else:
-            if (self.amin[aname]<=0 or self.amax[aname]<=0):
+            if (self.maxTotal<=0):
                 # use log only for positive values
                 QMessageBox.warning(self,"Warning","Logarithm is not applicable for non-positive values!")
                 self.rbLin.toggle()
                 return
-            mn=math.log(self.amin[aname])
-            mx=math.log(self.amax[aname])
+            mx=math.log(self.maxTotal)
+        # failsafe string-loat conversion
         try:
             sf=float(self.scaleFactor.text())
         except ValueError:
             sf=0
-        mn=mn*sf
         mx=mx*sf
         self.sf=sf
-        self.lblRange.setText(str(mn)+" - "+str(mx))
+        self.lblRange.setText(str(mx))
                 
     def runThis(self,iface):
         """This is called when user clicks on "3D piechart"
@@ -223,8 +191,6 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
                 if self.attrList.item(i).checkState():
                     aNames.append(self.attrList.item(i).text())
                     aColors.append(self.attrList.item(i).backgroundColor())
-            print aNames
-            print aColors
             self.sf=float(self.scaleFactor.text())
             #aName=self.attrList.currentText()
             # create projection transformer object
@@ -237,30 +203,47 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
             ofile.write('[\n{"id":"document","version":"1.0"}')
             # iterate over feaures
             polyN=0
+            # radius and height if they are fixed
+            r=float(self.leRadius.text())
+            h=float(self.leHeight.text())*1000 # height in meters
             for f in alayer.getFeatures():
+                # add element name if checked
+                if (self.cbAddName.isChecked()):
+                    nameString=',\n\t"name":"'+f[self.strAttrList.currentText()]+'"'
+                else:
+                    nameString=''
                 # calculate total
                 total=0
                 for i in range(len(aNames)):
                     total=total+f[aNames[i]]
-                # calculate height
-                if (self.rbLin.isChecked()):
-                    h=total
-                elif (self.rbSqrt.isChecked()):
-                    h=math.sqrt(total)
-                else:
-                    h=math.log(total)
-                h=h*self.sf
+                # calculate height if variable
+                if self.rbHvar.isChecked():
+                    if (self.rbLin.isChecked()):
+                        h=total
+                    elif (self.rbSqrt.isChecked()):
+                        h=math.sqrt(total)
+                    else:
+                        h=math.log(total)
+                    h=h*self.sf
+                # calculate height if variable
+                if self.rbRvar.isChecked():
+                    if (self.rbLin.isChecked()):
+                        r=total
+                    elif (self.rbSqrt.isChecked()):
+                        r=math.sqrt(total)
+                    else:
+                        r=math.log(total)
+                    r=r*self.sf
                 # get centroid in WGS84
                 cent=xform.transform(f.geometry().centroid().asPoint())
                 cx=cent.x()
                 cy=cent.y()
                 # draw pieslices
                 aSt=0 # starting angle
+                rRad=r/6373 # pie radius in radians
+                rad=math.pi/180;
                 for i in range(len(aNames)):
                     relSize=f[aNames[i]]*1.0/total
-                    print f[aNames[i]]*1.0
-                    print total
-                    print relSize
                     aEnd=aSt+6.2831*relSize
                     coords=str(cx)+","+str(cy)+",0"
                     # color
@@ -272,59 +255,43 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
                     # TODO: better solution here :)
                     for j in range(21):
                         aCur=aSt+j*6.2831/20*relSize
-                        curx=cx+0.5*math.sin(aCur)
-                        cury=cy+0.5*math.cos(aCur)
+                        cury=math.asin(math.sin(cy*rad)*math.cos(rRad)+math.cos(cy*rad)*math.sin(rRad)*math.cos(aCur))/rad;
+                        cosl=(math.cos(rRad)-math.sin(cury*rad)*math.sin(cy*rad))/math.cos(cury*rad)/math.cos(cy*rad)
+                        if (cosl>1) :
+                            cosl=1
+                        if (cosl<-1) :
+                            cosl=-1
+                        if aCur<math.pi :
+                            curx=cx+math.acos(cosl)/rad
+                        else :
+                            curx=cx-math.acos(cosl)/rad
                         coords=coords+","+str(curx)+","+str(cury)+",0"
                     coords=coords+","+str(cx)+","+str(cy)+",0"
-                    packetString='{\n\t"id":"poly'+str(polyN)+'",\n\t"polygon":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"extrudedHeight":{"number":'+str(h)+'}}}'
+                    descString=aNames[i]+': '+str(f[aNames[i]])
+                    packetString='{\n\t"id":"poly'+str(polyN)+'"'+nameString+',\n\t"description":"'+descString+'",\n\t"polygon":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"extrudedHeight":{"number":'+str(h)+'}}}'
                     ofile.write(",\n"+packetString);
                     polyN=polyN+1
                     aSt=aEnd
                     coords=""
-                # add element name if checked
-                """if (self.cbAddName.isChecked()):
-                    nameString=',\n\t"name":"'+f[self.strAttrList.currentText()]+'"'
-                else:
-                    nameString=''
-                packetString='{\n\t"id":"poly'+str(polyN)+'",\n\t"description":"'+aName+': '+str(f[aName])+'"'+nameString+',\n\t"polygon":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"extrudedHeight":{"number":'+str(h)+'}}}'
-                ofile.write(",\n"+packetString);
-                polyN=polyN+1"""
             # trailing ] and close flie
             ofile.write('\n]')
             ofile.close()
             # create legend if checked
-            """
             if (self.cbCreateLegend.isChecked()):
                 # open html legend file
                 hfile=codecs.open(htmlFn,'w','utf-8')
                 hfile.write('<style>\n.czmlLegendSample { width: 40px; height: 20px; border-radius:3px; border: solid thin black; display: inline-block; }\n')
                 hfile.write('h3.czmlLegend { margin:0; padding-bottom:10px; }\n')
-                if self.legendSamples!=None:
-                    # we have custom settings for legend
-                    for i in range(len(self.legendSamples)):
-                        rv=(self.legendSamples[i]-self.amin[aName])/(self.amax[aName]-self.amin[aName])
-                        R=int(R1+dR*rv)
-                        G=int(G1+dG*rv)
-                        B=int(B1+dB*rv)
-                        hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
-                else:
-                    for i in range(4):
-                        R=int(R1+dR*i/3.0)
-                        G=int(G1+dG*i/3.0)
-                        B=int(B1+dB*i/3.0)
-                        hfile.write('.czmlLegendSample'+str(i)+' { background: rgb('+str(R)+','+str(G)+','+str(B)+'); }\n')
+                for i in range(len(aNames)):
+                    R=aColors[i].red()
+                    G=aColors[i].green()
+                    B=aColors[i].blue()
+                    A=aColors[i].alpha()
+                    hfile.write('.czmlLegendSample'+str(i)+' { background: rgba('+str(R)+','+str(G)+','+str(B)+','+str(A)+'); }\n')
                 hfile.write('</style>\n<h3 class="czmlLegend">'+self.leLegendAttrName.text()+'</h3>')
-                if self.legendSamples!=None:
-                    # we have custom settings for legend
-                    for i in range(len(self.legendSamples)):
-                        value=self.legendSamples[i]
-                        hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
-                else:
-                    for i in range(4):
-                        value=int(self.amin[aName]+(self.amax[aName]-self.amin[aName])*i/3.0)
-                        hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+str(value)+'<br/>')
-                    hfile.close()
-            """
+                for i in range(len(aNames)):
+                    hfile.write('<span class="czmlLegendSample czmlLegendSample'+str(i)+'"></span> '+aNames[i]+'<br/>')
+                hfile.close()
             # farewell message
             msg="CZML file ("+filename+")"
             if (self.cbCreateLegend.isChecked()):
