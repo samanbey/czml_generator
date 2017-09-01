@@ -22,16 +22,16 @@ There is a sample Cesium viewer in `sampleViewer` folder.
 
 ### Prism Map and Prism Map with time
 Use this function to create prism maps with or without temporal animation based on any polygon layers currently opened in QGIS
-![Prism map sample image](/images/3Dprism.png)
+![Prism map sample image](/images/3Dprism.jpg)
 
 ### Scaled models with time
 Animated visualization of attribute change in time by placing 3D models whose sizes change with the corresponding attribute value.
-![Scaled models sample image](/images/scaledModels.png)
+![Scaled models sample image](/images/scaledModels.jpg)
 
 ### Raised connector lines
 Creates raised connector arcs from a line layer. Useful for visualizing connections between a set of points
-![Connector lines sample image](/images/connLines.png)
+![Connector lines sample image](/images/connLines.jpg)
 
 ### 3D Pie chart
 Creates 3D Pie charts at feature centroids
-![3D pie charts sample image](/images/piecharts.png)
+![3D pie charts sample image](/images/piecharts.jpg)
