@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2016-01-06
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Gede Mátyás
+        copyright            : (C) 2016 by Gede MÃ¡tyÃ¡s
         email                : saman@map.elte.hu
  ***************************************************************************/
 
@@ -22,9 +22,10 @@
  
  A dialog for creating prism maps
 """
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox, QFileDialog
-from qgis.core import QGis, QgsCoordinateReferenceSystem, QgsCoordinateTransform
+from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
+#from PyQt5.QtGui import 
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, Qgis, QgsWkbTypes
 import os
 import codecs
 import math
@@ -35,7 +36,7 @@ sys.modules['qgscolorbutton']=qgis.gui # a workaround to make setupUi know QGSCo
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'prism_map.ui'))
     
-class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
+class PrismMapDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(PrismMapDialog, self).__init__(parent)
@@ -78,7 +79,7 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
     
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
-        fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
+        fn,_=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
         if (fn!=""):
             self.leFileName.setText(fn)
             
@@ -93,8 +94,9 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         """Loads the attribute names of the selected layer into attrList and strAttrList comboboxes"""
         # find layer by chosen name
         name=self.layerList.currentText()
+        layers = [tree_layer.layer() for tree_layer in QgsProject.instance().layerTreeRoot().findLayers()]
         alayer=None
-        for layer in self.iface.legendInterface().layers():
+        for layer in layers:
             if (layer.name()==name):
                 alayer=layer
                 break
@@ -105,7 +107,7 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         # get attr list
         al=[]
         self.strAttrList.clear()
-        for fld in alayer.pendingFields():
+        for fld in alayer.fields():
             if (fld.typeName() in ['Integer','Real']): # TODO: add other numeric types
                 al.append(fld.name()) # a mappable attribute if numeric
             elif (fld.typeName()=='String'):
@@ -178,13 +180,18 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
         self.legendSamples=None
         
         # collect currently loaded polygon layers to "layerList" comboBox
-        layers=iface.legendInterface().layers()
+        #layers=iface.legendInterface().layers()
+        layers = [tree_layer.layer() for tree_layer in QgsProject.instance().layerTreeRoot().findLayers()]
         ll=[] 
         for layer in layers:
-            if (layer.type()==layer.VectorLayer and layer.geometryType()==QGis.Polygon):
+            if (layer.type()==layer.VectorLayer and layer.geometryType()==QgsWkbTypes.PolygonGeometry):
                 ll.append(layer.name())
         self.layerList.clear()
         self.layerList.addItems(ll)
+        # die if no suitable layers found
+        if (len(ll)==0):
+            QMessageBox.warning(self,"Error","No suitable layers found.")
+            return
         # show dialog
         self.show()
         if self.exec_():
@@ -205,7 +212,7 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
             # create projection transformer object
             crsDest = QgsCoordinateReferenceSystem(4326) # WGS 84
             crsSrc = alayer.crs()
-            xform = QgsCoordinateTransform(crsSrc, crsDest)
+            xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
             # get colors
             c1=self.cb1.color()
             c2=self.cb2.color()
@@ -239,22 +246,28 @@ class PrismMapDialog(QtGui.QDialog, FORM_CLASS):
                 B=B1+dB*rh
                 A=A1+dA*rh
                 rgba=str(R)+','+str(G)+','+str(B)+','+str(A)
-                coords=""
-                # iterate over rings of the polygon
-                for ring in f.geometry().asPolygon():
-                    for p in ring:
-                        p1=xform.transform(p)
-                        if (coords!=""):
-                            coords=coords+","
-                        coords=coords+'\n\t\t\t\t'+str(p1.x())+","+str(p1.y())+",0"
-                # add element name if checked
-                if (self.cbAddName.isChecked()):
-                    nameString=',\n\t"name":"'+f[self.strAttrList.currentText()]+'"'
+                # polygon/multipolygon?
+                if len(f.geometry().asMultiPolygon())>0:
+                    mpg=f.geometry().asMultiPolygon()
                 else:
-                    nameString=''
-                packetString='{\n\t"id":"poly'+str(polyN)+'",\n\t"description":"'+aName+': '+str(f[aName])+'"'+nameString+',\n\t"polygon":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"extrudedHeight":{"number":'+str(h)+'}}}'
-                ofile.write(",\n"+packetString);
-                polyN=polyN+1
+                    mpg=[f.geometry().asPolygon()]
+                for pg in mpg:
+                    coords=""
+                    # iterate over rings of the polygon
+                    for ring in pg:
+                        for p in ring:
+                            p1=xform.transform(p)
+                            if (coords!=""):
+                                coords=coords+","
+                            coords=coords+'\n\t\t\t\t'+str(p1.x())+","+str(p1.y())+",0"
+                    # add element name if checked
+                    if (self.cbAddName.isChecked()):
+                        nameString=',\n\t"name":"'+f[self.strAttrList.currentText()]+'"'
+                    else:
+                        nameString=''
+                    packetString='{\n\t"id":"poly'+str(polyN)+'",\n\t"description":"'+aName+': '+str(f[aName])+'"'+nameString+',\n\t"polygon":{\n\t\t"material":{"solidColor":{"color":{"rgba":['+rgba+']}}},\n\t\t"positions":{\n\t\t\t"cartographicDegrees":['+coords+']},\n\t\t"extrudedHeight":{"number":'+str(h)+'}}}'
+                    ofile.write(",\n"+packetString);
+                    polyN=polyN+1
             # trailing ] and close flie
             ofile.write('\n]')
             ofile.close()

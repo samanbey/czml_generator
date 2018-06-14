@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2016-01-06
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Gede Mátyás
+        copyright            : (C) 2016 by Gede MÃ¡tyÃ¡s
         email                : saman@map.elte.hu
  ***************************************************************************/
 
@@ -22,9 +22,10 @@
  
  A dialog for creating 3D piecharts
 """
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox, QFileDialog, QListWidgetItem, QColor
-from qgis.core import QGis, QgsCoordinateReferenceSystem, QgsCoordinateTransform
+from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QListWidgetItem
+from PyQt5.QtGui import QColor, QBrush
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, Qgis, QgsWkbTypes
 import os
 import codecs
 import math
@@ -35,7 +36,7 @@ sys.modules['qgscolorbutton']=qgis.gui # a workaround to make setupUi know QGSCo
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'piechart.ui'))
     
-class PiechartDialog(QtGui.QDialog, FORM_CLASS):
+class PiechartDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(PiechartDialog, self).__init__(parent)
@@ -61,17 +62,17 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
         maxTotal=0
         for i in range(self.attrList.count()):
             if self.attrList.item(i).checkState()>0:
-                self.attrList.item(i).setBackgroundColor(colors[ci%len(colors)])
+                self.attrList.item(i).setBackground(QBrush(colors[ci%len(colors)]))
                 maxTotal=maxTotal+self.amax[self.attrList.item(i).text()];
                 ci=ci+1
             else:
-                self.attrList.item(i).setBackgroundColor(QColor(255,255,255))
+                self.attrList.item(i).setBackground(QBrush(QColor(255,255,255)))
         self.maxTotal=maxTotal
         self.showMinMax()
         
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
-        fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
+        fn,_=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
         if (fn!=""):
             self.leFileName.setText(fn)
             
@@ -87,7 +88,8 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
         # find layer by chosen name
         name=self.layerList.currentText()
         alayer=None
-        for layer in self.iface.legendInterface().layers():
+        layers = [tree_layer.layer() for tree_layer in QgsProject.instance().layerTreeRoot().findLayers()]
+        for layer in layers:
             if (layer.name()==name):
                 alayer=layer
                 break
@@ -96,7 +98,7 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
         # get attr list
         al=[]
         self.strAttrList.clear()
-        for fld in alayer.pendingFields():
+        for fld in alayer.fields():
             if (fld.typeName() in ['Integer','Real']): # TODO: add other numeric types
                 al.append(fld.name()) # a mappable attribute if numeric
             elif (fld.typeName()=='String'):
@@ -112,7 +114,7 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
                     if (f[a]>self.amax[a]):
                         self.amax[a]=f[a]
         # DEBUG:
-        print self.amax
+        print(self.amax)
         # set attr list
         self.attrList.clear()
         self.attrList.addItems(al)
@@ -162,10 +164,11 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
         self.legendSamples=None
         
         # collect currently loaded polygon layers to "layerList" comboBox
-        layers=iface.legendInterface().layers()
+        #layers=iface.legendInterface().layers()
+        layers = [tree_layer.layer() for tree_layer in QgsProject.instance().layerTreeRoot().findLayers()]
         ll=[] 
         for layer in layers:
-            if (layer.type()==layer.VectorLayer and layer.geometryType()==QGis.Polygon):
+            if (layer.type()==layer.VectorLayer and layer.geometryType()==QgsWkbTypes.PolygonGeometry):
                 ll.append(layer.name())
         self.layerList.clear()
         self.layerList.addItems(ll)
@@ -190,13 +193,13 @@ class PiechartDialog(QtGui.QDialog, FORM_CLASS):
             for i in range(self.attrList.count()):
                 if self.attrList.item(i).checkState():
                     aNames.append(self.attrList.item(i).text())
-                    aColors.append(self.attrList.item(i).backgroundColor())
+                    aColors.append(self.attrList.item(i).background().color())
             self.sf=float(self.scaleFactor.text())
             #aName=self.attrList.currentText()
             # create projection transformer object
             crsDest = QgsCoordinateReferenceSystem(4326) # WGS 84
             crsSrc = alayer.crs()
-            xform = QgsCoordinateTransform(crsSrc, crsDest)
+            xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
             # open output file
             ofile=codecs.open(filename,'w','utf-8')
             # leading [ and document packet

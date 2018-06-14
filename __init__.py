@@ -6,7 +6,7 @@
  CZML Generator
                              -------------------
         begin                : 2016-01-06
-        copyright            : (C) 2016 by M·ty·s Gede
+        copyright            : (C) 2016 by M√°ty√°s Gede
         email                : saman@map.elte.hu
         git sha              : $Format:%H$
  ***************************************************************************/
@@ -28,5 +28,5 @@ def classFactory(iface):
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
-    from czmlgen import CZMLGenerator
+    from .czmlgen import CZMLGenerator
     return CZMLGenerator(iface)

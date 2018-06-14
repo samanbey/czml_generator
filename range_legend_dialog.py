@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2016-01-06
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Gede M·ty·s
+        copyright            : (C) 2016 by Gede M√°ty√°s
         email                : saman@map.elte.hu
  ***************************************************************************/
 
@@ -22,10 +22,10 @@
  
  A dialog for setting range legends
 """
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtCore import Qt
-from qgis.core import QGis
+from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtCore import Qt
+#from qgis.core import QGis
 import os
 import codecs
 import math
@@ -34,7 +34,7 @@ import qgis
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'range_legend.ui'))
     
-class RangeLegendDialog(QtGui.QDialog, FORM_CLASS):
+class RangeLegendDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(RangeLegendDialog, self).__init__(parent)

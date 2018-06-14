@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2016-01-06
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Gede M·ty·s
+        copyright            : (C) 2016 by Gede M√°ty√°s
         email                : saman@map.elte.hu
  ***************************************************************************/
 
@@ -22,9 +22,9 @@
  
  A dialog for creating raised connector lines
 """
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox, QFileDialog, QTableWidgetItem
-from qgis.core import QGis, QgsCoordinateReferenceSystem, QgsCoordinateTransform
+from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, Qgis
 import os
 import codecs
 import math
@@ -36,7 +36,7 @@ sys.modules['qgscolorbutton']=qgis.gui # a workaround to make setupUi know QGSCo
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'connector_lines.ui'))
     
-class ConnectorLinesDialog(QtGui.QDialog, FORM_CLASS):
+class ConnectorLinesDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(ConnectorLinesDialog, self).__init__(parent)

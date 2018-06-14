@@ -7,7 +7,7 @@
                              -------------------
         begin                : 2016-01-06
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Gede M·ty·s
+        copyright            : (C) 2016 by Gede M√°ty√°s
         email                : saman@map.elte.hu
  ***************************************************************************/
 
@@ -22,9 +22,9 @@
  
  A dialog for creating maps full of scaled models with temporal animation
 """
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox, QFileDialog, QTableWidgetItem
-from qgis.core import QGis, QgsCoordinateReferenceSystem, QgsCoordinateTransform
+from PyQt5 import QtWidgets, QtGui, uic
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, Qgis, QgsWkbTypes
 import os
 import codecs
 import math
@@ -35,7 +35,7 @@ sys.modules['qgscolorbutton']=qgis.gui # a workaround to make setupUi know QGSCo
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'scaled_models.ui'))
     
-class ScaledModelsDialog(QtGui.QDialog, FORM_CLASS):
+class ScaledModelsDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(ScaledModelsDialog, self).__init__(parent)
@@ -55,7 +55,7 @@ class ScaledModelsDialog(QtGui.QDialog, FORM_CLASS):
                 
     def browseFile(self):
         """Opens a file save as dialog to get the file name"""
-        fn=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
+        fn,_=QFileDialog.getSaveFileName(self,"Save file as...","","CZML flies (*.czml)")
         if (fn!=""):
             self.leFileName.setText(fn)
             
@@ -71,7 +71,8 @@ class ScaledModelsDialog(QtGui.QDialog, FORM_CLASS):
         # find layer by chosen name
         name=self.layerList.currentText()
         alayer=None
-        for layer in self.iface.legendInterface().layers():
+        layers = [tree_layer.layer() for tree_layer in QgsProject.instance().layerTreeRoot().findLayers()]
+        for layer in layers:
             if (layer.name()==name):
                 alayer=layer
                 break
@@ -80,7 +81,7 @@ class ScaledModelsDialog(QtGui.QDialog, FORM_CLASS):
         # get attr list
         al=[]
         self.strAttrList.clear()
-        for fld in alayer.pendingFields():
+        for fld in alayer.fields():
             if (fld.typeName() in ['Integer','Real']): # TODO: add other numeric types
                 al.append(fld.name()) # a mappable attribute if numeric
             elif (fld.typeName()=='String'):
@@ -201,7 +202,8 @@ class ScaledModelsDialog(QtGui.QDialog, FORM_CLASS):
         self.legendSamples=None
         
         # collect currently loaded vector layers to "layerList" comboBox
-        layers=iface.legendInterface().layers()
+        #layers=iface.legendInterface().layers()
+        layers = [tree_layer.layer() for tree_layer in QgsProject.instance().layerTreeRoot().findLayers()]
         ll=[] 
         for layer in layers:
             # check if it is a vector layer
@@ -232,7 +234,7 @@ class ScaledModelsDialog(QtGui.QDialog, FORM_CLASS):
             # create projection transformer object
             crsDest = QgsCoordinateReferenceSystem(4326) # WGS 84
             crsSrc = alayer.crs()
-            xform = QgsCoordinateTransform(crsSrc, crsDest)
+            xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
             # find minimum/maximum time and attribute value
             self.minT=None
             self.maxT=None

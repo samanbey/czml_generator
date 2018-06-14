@@ -6,7 +6,7 @@
  CZML Generator
                              -------------------
         begin                : 2016-01-06
-        copyright            : (C) 2016 by M·ty·s Gede
+        copyright            : (C) 2016 by M√°ty√°s Gede
         email                : saman@map.elte.hu
         git sha              : $Format:%H$
  ***************************************************************************/
@@ -20,18 +20,20 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 from qgis.core import *
 
-import resources
+#import resources
+from .resources import *
 
-from prism_map_dialog import PrismMapDialog
-from prism_map_time_dialog import PrismMapTimeDialog
-from range_legend_dialog import RangeLegendDialog
-from scaled_models_dialog import ScaledModelsDialog
-from connector_lines_dialog import ConnectorLinesDialog
-from piechart_dialog import PiechartDialog
+from .prism_map_dialog import PrismMapDialog
+from .prism_map_time_dialog import PrismMapTimeDialog
+from .range_legend_dialog import RangeLegendDialog
+from .scaled_models_dialog import ScaledModelsDialog
+from .connector_lines_dialog import ConnectorLinesDialog
+from .piechart_dialog import PiechartDialog
 
 class CZMLGenerator:
     """CZML Generator QGIS plugin"""
