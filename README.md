@@ -35,3 +35,6 @@ Creates raised connector arcs from a line layer. Useful for visualizing connecti
 ### 3D Pie chart
 Creates 3D Pie charts at feature centroids
 ![3D pie charts sample image](/images/piecharts.jpg)
+
+## How to cite
+Gede, M.: Using Cesium for 3D Thematic Visualisations on the Web, Proc. Int. Cartogr. Assoc., 1, 45, https://doi.org/10.5194/ica-proc-1-45-2018, 2018. 
